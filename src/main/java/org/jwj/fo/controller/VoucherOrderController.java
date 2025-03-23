@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import static org.jwj.fo.utils.RedisConstants.LOCK_SERVICE_ORDER_PREFIX;
+
 
 @RestController
 @RequestMapping("/voucher-order")
@@ -20,6 +22,6 @@ public class VoucherOrderController {
     private IVoucherOrderService voucherOrderService;
     @PostMapping("seckill/{id}")
     public Result seckillVoucher(@PathVariable("id") Long voucherId) {
-        return voucherOrderService.secKillVoucher(voucherId);
+        return voucherOrderService.secKillVoucher(voucherId, LOCK_SERVICE_ORDER_PREFIX);
     }
 }

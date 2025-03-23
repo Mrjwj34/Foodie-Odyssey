@@ -8,13 +8,18 @@ import org.jwj.fo.mapper.VoucherOrderMapper;
 import org.jwj.fo.service.ISeckillVoucherService;
 import org.jwj.fo.service.IVoucherOrderService;
 import org.jwj.fo.utils.RedisIdWorker;
+import org.jwj.fo.utils.SimpleRedisLock;
 import org.jwj.fo.utils.UserHolder;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Objects;
+
+import static org.jwj.fo.utils.RedisConstants.KEY_PREFIX;
 
 
 @Service
@@ -24,9 +29,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     RedisIdWorker redisIdWorker;
     @Resource
-    private ApplicationContext applicationContext;
+    private StringRedisTemplate stringRedisTemplate;
     @Override
-    public Result secKillVoucher(Long voucherId) {
+    public Result secKillVoucher(Long voucherId, String serviceType) {
         // 查询优惠券
         SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
         // 判断是否开始
@@ -44,10 +49,17 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             // 已结束
             return Result.fail("库存不足");
         }
-        synchronized (UserHolder.getUser().getId().toString().intern()){// 保证同一用户只能购买一次
-            // 获取代理对象
+        // 获取锁
+        Long userId = UserHolder.getUser().getId();
+        SimpleRedisLock simpleRedisLock = new SimpleRedisLock(stringRedisTemplate, serviceType + userId);
+        if (!simpleRedisLock.tryLock(5)) {
+            return Result.fail("请勿重复购买");
+        }
+        try {
             IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
-            return proxy.createVoucherOrder(voucherId);
+            return proxy.createVoucherOrder(voucherId);// 获取代理对象
+        } finally {
+            simpleRedisLock.unlock();
         }
     }
 

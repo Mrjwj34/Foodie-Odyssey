@@ -38,7 +38,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     CacheClient client;
     @Override
     public Result queryById(Long id) {
-        //缓存穿透 Shop shop = queryWithPassThrough(id);
+        // 缓存穿透 Shop shop = queryWithPassThrough(id);
         // 互斥锁解决缓存击穿
         // Shop shop = queryWithMutex(id);
         Shop shop;
@@ -80,7 +80,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             // 不存在根据id查询数据库
             shop = getById(id);
             // 模拟重建延迟
-//            Thread.sleep(200);
+            // Thread.sleep(200);
             // 数据库不存在则返回空值并写入redis
             if(shop == null){
                 // 将空值写入redis，设置较短的过期时间，比如2分钟

@@ -37,14 +37,18 @@ public class CacheClient {
     }
     public <O, ID> O queryWithPassThrough(String keyPrefix, ID id, Class<O> type, Function<ID, O> dbFallback, Long time, TimeUnit unit){
         String key = CACHE_SHOP_KEY + id;
-        // 从redis查询缓存
-        String shopJson = stringRedisTemplate.opsForValue().get(key);
-        // 判断缓存是否存在
-        if (shopJson != null) {
-            if (shopJson.isEmpty()) {
-                return null; // 代表之前查询过，数据库里也没有
+        try {
+            // 从redis查询缓存
+            String shopJson = stringRedisTemplate.opsForValue().get(key);
+            // 判断缓存是否存在
+            if (shopJson != null) {
+                if (shopJson.isEmpty()) {
+                    return null; // 代表之前查询过，数据库里也没有
+                }
+                return JSONUtil.toBean(shopJson, type);
             }
-            return JSONUtil.toBean(shopJson, type);
+        } catch (Exception e) {
+            log.error("查询缓存异常", e);
         }
         // 不存在根据id查询数据库
         O o = dbFallback.apply(id);

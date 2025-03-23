@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface IVoucherOrderService extends IService<VoucherOrder> {
 
-    Result secKillVoucher(Long voucherId);
+    Result secKillVoucher(Long voucherId, String serviceType);
 
     Result createVoucherOrder(Long voucherId);
 }
