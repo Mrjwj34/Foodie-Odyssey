@@ -5,7 +5,7 @@ spring:
     name: Foodie-Odyssey
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/fo?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://127.0.0.1:3306/fo?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
     password: jwj1554965857
   redis:

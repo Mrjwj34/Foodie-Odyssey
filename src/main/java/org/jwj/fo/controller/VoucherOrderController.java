@@ -22,6 +22,6 @@ public class VoucherOrderController {
     private IVoucherOrderService voucherOrderService;
     @PostMapping("seckill/{id}")
     public Result seckillVoucher(@PathVariable("id") Long voucherId) {
-        return voucherOrderService.secKillVoucher(voucherId, LOCK_SERVICE_ORDER_PREFIX);
+        return voucherOrderService.secKillVoucher(voucherId);
     }
 }

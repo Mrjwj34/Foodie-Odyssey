@@ -1,0 +1,10 @@
+-------------------------------------------------------------------------------
+Test set: org.jwj.fo.TestRedisWorker
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 1.139 s <<< FAILURE! - in org.jwj.fo.TestRedisWorker
+testNextId  Time elapsed: 0 s  <<< ERROR!
+java.lang.IllegalStateException: Failed to load ApplicationContext
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'voucherOrderController': Unsatisfied dependency expressed through field 'voucherOrderService'; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'voucherOrderServiceImpl': Invocation of init method failed; nested exception is java.lang.IllegalStateException: Cannot find current proxy: Set 'exposeProxy' property on Advised to 'true' to make it available, and ensure that AopContext.currentProxy() is invoked in the same thread as the AOP invocation context.
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'voucherOrderServiceImpl': Invocation of init method failed; nested exception is java.lang.IllegalStateException: Cannot find current proxy: Set 'exposeProxy' property on Advised to 'true' to make it available, and ensure that AopContext.currentProxy() is invoked in the same thread as the AOP invocation context.
+Caused by: java.lang.IllegalStateException: Cannot find current proxy: Set 'exposeProxy' property on Advised to 'true' to make it available, and ensure that AopContext.currentProxy() is invoked in the same thread as the AOP invocation context.
+

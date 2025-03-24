@@ -39,7 +39,6 @@ public class SimpleRedisLock implements Ilock {
 //        if (id.equals(lockValue)) {
 //            stringRedisTemplate.delete(KEY_PREFIX + lockKey);
 //        }
-    }
     @Override
     public void unlock() {
         //调用lua脚本删除key, 保证原子性

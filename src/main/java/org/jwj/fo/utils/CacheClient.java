@@ -3,12 +3,17 @@ package org.jwj.fo.utils;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.google.common.hash.BloomFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.jwj.fo.entity.Shop;
+import org.jwj.fo.service.IShopService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -21,10 +26,10 @@ import static org.jwj.fo.utils.RedisConstants.*;
 public class CacheClient {
     private final StringRedisTemplate stringRedisTemplate;
     private static final ExecutorService CHACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
-
     public CacheClient(StringRedisTemplate stringRedisTemplate) {
         this.stringRedisTemplate = stringRedisTemplate;
     }
+
     public void set(String key, Object value, Long time, TimeUnit unit) {
         stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(value), time, unit);
     }
@@ -58,7 +63,7 @@ public class CacheClient {
             this.set(key, "", time, unit);
             return null;
         }
-        // 存在则写入redis并返回
+        // 数据写入redis的同时，将key加入布隆过滤器
         this.set(key, o, time, unit);
         return o;
     }
