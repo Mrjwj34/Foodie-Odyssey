@@ -3,27 +3,39 @@ package org.jwj.fo.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.BeanToMapCopier;
 import cn.hutool.core.util.RandomUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.jwj.fo.dto.LoginFormDTO;
 import org.jwj.fo.dto.Result;
 import org.jwj.fo.dto.UserDTO;
+import org.jwj.fo.entity.Blog;
 import org.jwj.fo.entity.User;
 import org.jwj.fo.mapper.UserMapper;
+import org.jwj.fo.service.IBlogService;
 import org.jwj.fo.service.IUserService;
 import org.jwj.fo.utils.RegexUtils;
+import org.jwj.fo.utils.UserHolder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.jwj.fo.utils.RedisConstants.*;
+import static org.jwj.fo.utils.SystemConstants.MAX_PAGE_SIZE;
 import static org.jwj.fo.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
 
@@ -93,6 +105,89 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         stringRedisTemplate.expire(key, LOGIN_USER_TTL, TimeUnit.SECONDS);
         return Result.ok(uuid);
     }
+
+    @Override
+    public Result logout() {
+        // 获取当前登录用户
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("请登录后再退出");
+        }
+        Long id = user.getId();
+        String phone = getById(id).getPhone();
+        String token = stringRedisTemplate.opsForValue().get(LOGIN_PHONE_KEY + phone);
+        // 删除redis中的电话-uuid映射
+        stringRedisTemplate.delete(LOGIN_PHONE_KEY + phone);
+        // 删除redis中的用户信息
+        stringRedisTemplate.delete(LOGIN_USER_KEY + token);
+        return Result.ok();
+    }
+
+    @Override
+    public Result queryUserById(Long userId) {
+        User user = getById(userId);
+        if (user == null) {
+            return Result.fail("用户不存在");
+        }
+        UserDTO UserDTO = BeanUtil.copyProperties(user, org.jwj.fo.dto.UserDTO.class);
+        return Result.ok(UserDTO);
+    }
+
+    @Override
+    public Result sign() {
+        // 获取当前登录用户
+        UserDTO user = UserHolder.getUser();
+        // 获取日期
+        LocalDate date = LocalDate.now();
+        String suffix = date.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        // 拼接key
+        String key = USER_SIGN_KEY + user.getId() + ":" + suffix;
+        // 获取今天是第几天
+        int day = date.getDayOfMonth() - 1;
+        // 写入redis setbit key offset 1
+        Boolean bit = stringRedisTemplate.opsForValue().setBit(key, day, true);
+        return Result.ok();
+    }
+
+    @Override
+    public Result signCount() {
+        // 获取当前登录用户
+        UserDTO user = UserHolder.getUser();
+        // 获取日期
+        LocalDate date = LocalDate.now();
+        String suffix = date.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        // 拼接key
+        String key = USER_SIGN_KEY + user.getId() + ":" + suffix;
+        // 获取今天是第几天
+        int day = date.getDayOfMonth() - 1;
+        // 获取本月截取今天为止的所有签到记录, 返回一个十进制数字
+        List<Long> result = stringRedisTemplate.opsForValue()
+                .bitField(key, BitFieldSubCommands.create()
+                        .get(BitFieldSubCommands.BitFieldType.unsigned(day))
+                        .valueAt(0));
+        if (result == null || result.isEmpty()) {
+            return Result.ok(0);
+        }
+        Long num = result.get(0);
+        if (num == null || num == 0) {
+            return Result.ok(0);
+        }
+        // 循环遍历
+        int count = 0;
+        while(true) {
+            if ((num & 1) == 0) {
+                // 与1做与运算，结果为0，未签到，结束
+                break;
+            } else {
+                // 如果结果为1, 已签到, 计数器加一
+                count++;
+            }
+            // 把数字右移一位, 抛弃最后一位
+            num >>>= 1;
+        }
+        return Result.ok(count);
+    }
+
 
     private User createUserWithPhone(String phone) {
         User user = new User();

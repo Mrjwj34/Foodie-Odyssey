@@ -2,6 +2,7 @@ package org.jwj.fo.interceptor;
 
 import cn.hutool.core.bean.BeanUtil;
 import io.netty.util.internal.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.jwj.fo.dto.UserDTO;
 import org.jwj.fo.utils.RedisConstants;
 import org.jwj.fo.utils.UserHolder;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class RefreshTokenInterceptor implements HandlerInterceptor {
     StringRedisTemplate stringRedisTemplate;
 
@@ -22,6 +24,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        long currentTimeMillis = System.currentTimeMillis();
         //获取token
         String token = request.getHeader("authorization");
         if(StringUtil.isNullOrEmpty(token)){
@@ -36,9 +39,10 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         }
         UserDTO userDTO = BeanUtil.fillBeanWithMap(entries, new UserDTO(), false);
         //刷新token有效期
-        stringRedisTemplate.expire(key, RedisConstants.LOGIN_USER_TTL, TimeUnit.SECONDS);
+//        stringRedisTemplate.expire(key, RedisConstants.LOGIN_USER_TTL, TimeUnit.SECONDS);
         //存在则保存到threadlocal
         UserHolder.saveUser(userDTO);
+        log.info("刷新token有效期耗时: {}", (System.currentTimeMillis() - currentTimeMillis));
         //放行
         return true;
     }

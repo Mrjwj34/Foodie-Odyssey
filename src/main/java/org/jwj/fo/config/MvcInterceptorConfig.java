@@ -2,6 +2,7 @@ package org.jwj.fo.config;
 
 import org.jwj.fo.interceptor.LoginInterceptor;
 import org.jwj.fo.interceptor.RefreshTokenInterceptor;
+import org.jwj.fo.interceptor.UVInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -24,6 +25,16 @@ public class MvcInterceptorConfig implements WebMvcConfigurer {
                         "/voucher/**"
                 ).order(1);
         registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))
-                .addPathPatterns("/**").order(0);
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/seckill/**"
+                )
+                .order(0);
+        registry.addInterceptor(new UVInterceptor(stringRedisTemplate))
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/seckill/**"
+                )
+                .order(2);
     }
 }

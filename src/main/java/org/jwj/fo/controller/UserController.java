@@ -1,9 +1,15 @@
 package org.jwj.fo.controller;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jwj.fo.dto.LoginFormDTO;
 import org.jwj.fo.dto.Result;
+import org.jwj.fo.dto.UserDTO;
+import org.jwj.fo.entity.Blog;
+import org.jwj.fo.entity.User;
 import org.jwj.fo.entity.UserInfo;
+import org.jwj.fo.service.IBlogService;
 import org.jwj.fo.service.IUserInfoService;
 import org.jwj.fo.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +18,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+
+import java.util.List;
+
+import static org.jwj.fo.utils.SystemConstants.MAX_PAGE_SIZE;
 
 
 @Slf4j
@@ -25,12 +35,12 @@ public class UserController {
     @Resource
     private IUserInfoService userInfoService;
 
+
     /**
      * 发送手机验证码
      */
     @PostMapping("code")
     public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
-        // TODO 发送短信验证码并保存验证码
         return userService.sendCode(phone, session);
     }
 
@@ -40,7 +50,6 @@ public class UserController {
      */
     @PostMapping("/login")
     public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session){
-        // TODO 实现登录功能
         return userService.login(loginForm, session);
     }
 
@@ -50,8 +59,7 @@ public class UserController {
      */
     @PostMapping("/logout")
     public Result logout(){
-        // TODO 实现登出功能
-        return Result.fail("功能未完成");
+        return userService.logout();
     }
 
     @GetMapping("/me")
@@ -72,5 +80,17 @@ public class UserController {
         info.setUpdateTime(null);
         // 返回
         return Result.ok(info);
+    }
+    @GetMapping("/{id}")
+    public Result queryUserById(@PathVariable("id") Long userId){
+        return userService.queryUserById(userId);
+    }
+    @PostMapping("/sign")
+    public Result sign(){
+        return userService.sign();
+    }
+    @GetMapping("/signs/count")
+    public Result signCount(){
+        return userService.signCount();
     }
 }

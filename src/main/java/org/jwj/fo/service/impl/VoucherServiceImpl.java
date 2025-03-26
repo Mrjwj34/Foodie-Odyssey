@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.jwj.fo.utils.RedisConstants.SECKILL_STOCK_KEY;
 
@@ -46,7 +48,11 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
         seckillVoucher.setEndTime(voucher.getEndTime());
         seckillVoucherService.save(seckillVoucher);
         // 保存优惠券到redis
-        stringRedisTemplate.opsForValue().set(SECKILL_STOCK_KEY + voucher.getId(), voucher.getStock().toString());
+        Map<String, String> map = new HashMap<>();
+        map.put("stock", voucher.getStock().toString());
+        map.put("beginTime", voucher.getBeginTime().toString());
+        map.put("endTime", voucher.getEndTime().toString());
+        stringRedisTemplate.opsForHash().putAll("seckill:voucher:" + voucher.getId(), map);
     }
 
 }

@@ -89,7 +89,7 @@ public void extractTokens() throws Exception {
         }
         log.info("Token extraction completed. Output file: {}", outputPath);
     } catch (Exception e) {
-        log.error("Token extraction failed", e);
+        log.error("Token extraction failed",  e);
     } finally {
         reader.close();
         writer.close();
